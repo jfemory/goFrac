@@ -16,17 +16,17 @@ type World struct {
 }
 
 const (
-	screenWidth     = 500
-	screenHeight    = 500
-	scale           = 2
-	titleString     = "Go Frac!"
-	MAX_ITTERATIONS = 50
+	screenWidth    = 500
+	screenHeight   = 500
+	scale          = 2
+	titleString    = "Go Frac!"
+	max_iterations = 50
 )
 
 var (
 	world       *World
 	imageBuffer *image.RGBA
-	zoom        int
+	zoom        float64
 	focus       complex128
 )
 
@@ -38,10 +38,23 @@ func update(screen *ebiten.Image) error {
 	}
 	//button scan
 	if ebiten.IsKeyPressed(ebiten.KeyUp) {
-		zoom++
+		zoom = zoom * 1.3
 	}
 	if ebiten.IsKeyPressed(ebiten.KeyDown) {
-		zoom--
+		zoom = zoom * 0.7
+	}
+	coeff := 30.0
+	if ebiten.IsKeyPressed(ebiten.KeyW) {
+		focus = focus + complex(0.0, coeff/float64(zoom*screenHeight))
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyA) {
+		focus = focus + complex(coeff/float64(zoom*screenWidth), 0.0)
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyS) {
+		focus = focus - complex(0, coeff/float64(zoom*screenHeight))
+	}
+	if ebiten.IsKeyPressed(ebiten.KeyD) {
+		focus = focus - complex(coeff/float64(zoom*screenWidth), 0.0)
 	}
 	//screen update
 	world.Progress()
@@ -96,25 +109,25 @@ func (w *World) drawPixel(img *image.RGBA, x, y int) {
 		img.Pix[pos+2] = 0
 		img.Pix[pos+3] = 0
 		return
-	} else if w.area[y][x] == 2 {
+	} else if w.area[y][x] == max_iterations-4 {
 		img.Pix[pos] = 0xff
 		img.Pix[pos+1] = 0
 		img.Pix[pos+2] = 0
 		img.Pix[pos+3] = 0xff
 		return
-	} else if w.area[y][x] == 3 {
+	} else if w.area[y][x] == max_iterations-3 {
 		img.Pix[pos] = 0
 		img.Pix[pos+1] = 0xff
 		img.Pix[pos+2] = 0
 		img.Pix[pos+3] = 0xff
 		return
-	} else if w.area[y][x] == 4 {
+	} else if w.area[y][x] == max_iterations-2 {
 		img.Pix[pos] = 0
 		img.Pix[pos+1] = 0
 		img.Pix[pos+2] = 0xff
 		img.Pix[pos+3] = 0xff
 		return
-	} else if w.area[y][x] == 5 {
+	} else if w.area[y][x] == max_iterations-1 {
 		img.Pix[pos] = 0xff
 		img.Pix[pos+1] = 0
 		img.Pix[pos+2] = 0xff
@@ -147,11 +160,11 @@ func normalizeCoords(x, y int) complex128 {
 	return complex(real, im) - focus
 }
 
-//fractalValue takes a complex number and checks to see if it diverges from the Julia set of c in MAX_ITERATIONS.
+//fractalValue takes a complex number and checks to see if it diverges from the Julia set of c in max_iterations.
 func fractalValue(c complex128) int {
 	z := complex(0.0, 0.0)
-	for i := 0; i < MAX_ITTERATIONS; i++ {
-		if cmplx.Abs(z) > 2.0 {
+	for i := 0; i < max_iterations; i++ {
+		if cmplx.Abs(z) > 16.0 {
 			return i
 		}
 		z = z*z + c
